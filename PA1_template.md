@@ -1,9 +1,4 @@
-```{r load, echo=FALSE, results="hide"}
-library(lattice)
-library(knitr)
-options("scipen"=100, "digits"=6)
-setwd("~/Desktop/Coursera/reproducible research")
-```
+
 
 
 ### Reproducible Research Project #1
@@ -12,10 +7,9 @@ setwd("~/Desktop/Coursera/reproducible research")
 For the first part of this project we need to simply load in the data as 
 provided by the course
 
-```{r datahandle, echo=TRUE, results="hide"}
 
+```r
 dat <- read.csv("./activity.csv", header=TRUE, stringsAsFactors=FALSE, sep=",")
-
 ```
 
 
@@ -23,14 +17,14 @@ After the data was loaded we needed to fix some independent variable.
 A timestamp variable was generated, as well as a date time stamp. These will
 be used later in the assingment.
 
-```{r datasetup, echo=TRUE, results="hide"}
+
+```r
 dat$Date <- as.Date(strptime(dat$date, format="%Y-%m-%d"))
 
 dat$datetimestamp <- as.character(strptime(sprintf("%s %04d", dat$date, 
                         dat$interval), format = "%F %H%M", tz = "GMT"))
 
 dat$timestamp <- gsub("^.*? ","",dat$datetimestamp)
-
 ```
 
 
@@ -39,7 +33,8 @@ dat$timestamp <- gsub("^.*? ","",dat$datetimestamp)
 First to find the mean number of steps per day and generate a histogram 
 of the total number of steps taken per day.
 
-```{r part1, fig.height=4, echo=TRUE, results="asis"}
+
+```r
 daily.steps <- as.data.frame(aggregate(steps~Date, data=dat, FUN="sum",
                                 na.action=na.omit))
 
@@ -47,31 +42,36 @@ colnames(daily.steps)[2] <- "Totals"
 
 hist(daily.steps$Totals, main="Histogram of Steps", xlab="Total daily steps",
      breaks=15, col="gray", lwd=3, xlim=c(0,25000), ylim=c(0,20))
-
-
-daily.mean <- mean(daily.steps$Totals)
-daily.median <- median(daily.steps$Totals)
-
 ```
 
-The daily step average (ignoring the missing values) is  `r daily.mean`. 
-The daily step median (ignoring the missing values) is  `r daily.median`
+![plot of chunk part1](figure/part1-1.png) 
+
+```r
+daily.mean <- mean(daily.steps$Totals)
+daily.median <- median(daily.steps$Totals)
+```
+
+The daily step average (ignoring the missing values) is  10766.188679. 
+The daily step median (ignoring the missing values) is  10765
 
 ### What is the average daily activity pattern?
 
 Make a time series plot of the 5-minute average number of steps taken averaged
 across all days.
 
-```{r part2, fig.height=4, echo=TRUE, results="asis"}
+
+```r
 avg.steps <- as.data.frame(aggregate( steps ~ interval, data=dat, FUN="mean"))
 colnames(avg.steps)[2] <- "Averages"
 plot(x=avg.steps$interval, y=avg.steps$Averages, type="l" , lwd=3, 
         main="Time Series Plot", xlab="Interval", ylab="Averages", 
         xlim=c(0,2500), ylim=c(0,250))
 abline(h=mean(mean(avg.steps$Averages)), lty=2,lwd=3)
+```
 
+![plot of chunk part2](figure/part2-1.png) 
 
-
+```r
 avg.steps.temp <- avg.steps[which(avg.steps$Averages==max(avg.steps$Averages)), 
                             c(1,2)]
 
@@ -87,8 +87,8 @@ max.int <- max.avg.steps[1,1]
 max.avg <- max.avg.steps[1,3]
 max.time <- max.avg.steps[1,4]
 ```
-The maximum average number of steps occured in interval:`r max.int` and 
-the count was `r max.avg` steps taken at `r max.time` in the morning.
+The maximum average number of steps occured in interval:835 and 
+the count was 206.17 steps taken at 08:35:00 in the morning.
 
 ### Imputing missing values
 
@@ -96,15 +96,16 @@ We have noticed that there appears to be missing values in the data set. The
 first thing is to count the number of missing values. Then we will use the 
 daily max to imput those values.
 
-```{r missing, echo=TRUE, results="asis"}
+
+```r
 missing <- sum(is.na(dat[,1]))
 ```
 
-There are `r missing` values in the data set. Now the missing values will 
+There are 2304 values in the data set. Now the missing values will 
 be imputed with the daily averages and a histogram will be generated.
 
-```{r imput, echo=TRUE, results="asis", fig.height=4}
 
+```r
 timestamp <- dat[c(3,4,5)]
 
 merge <- merge(avg.steps, timestamp, by="interval")
@@ -127,13 +128,17 @@ hist(total.steps$Totals, main="",xlab="Total Daily Steps", breaks=15, col="gray"
      ylim=c(0,30), lwd=2)
 title("Histogram of Total Daily Steps", 
         sub="Missing values imputed with daily average", outer=FALSE)
+```
 
+![plot of chunk imput](figure/imput-1.png) 
+
+```r
 total.mean <- mean(total.steps$Totals)
 total.median <- median(total.steps$Totals)
 ```
-Note that the mean is now `r total.mean` and the median is `r total.median` 
+Note that the mean is now 10766.188679 and the median is 10765 
 after imputing and recall before imputing the mean and the median were 
-`r daily.mean` and `r daily.median` respectivally. Note that the histogram 
+10766.188679 and 10765 respectivally. Note that the histogram 
 has not changed much. This is mostly likely due to the fact that with a data
 set like this we are seeing the effects of weak law of large numbers.
 
@@ -143,19 +148,7 @@ For this part we are to generate a new factor variable with two levels -
 weekdays and weekend. Then we are to make a panel plot similiar to what we
 did previously, only this time by factor group.
 
-```{r part3, echo=FALSE, results="asis"}
-weekends <- c("Saturday","Sunday")
-
-dat.mod$weekday <- factor((weekdays(dat.mod$Date.x) %in% weekends), levels=c(FALSE, TRUE), 
-                          labels=c("Weekend", "Weekday"))
-
-avg.steps.total <- as.data.frame(aggregate( steps ~ interval.x + weekday, data=dat.mod, FUN="mean"))
-colnames(avg.steps.total)[c(1,3)] <- c("Interval","Averages")
-
-xyplot(Averages ~ Interval | weekday, data=avg.steps.total, layout=c(1,2), 
-       type=c("l","l"), main="Time series: by factor group", ylab="Average steps", 
-       xlab="Time interval")
-```
+![plot of chunk part3](figure/part3-1.png) 
 
 
 
