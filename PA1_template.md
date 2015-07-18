@@ -12,6 +12,15 @@ provided by the course
 dat <- read.csv("./activity.csv", header=TRUE, stringsAsFactors=FALSE, sep=",")
 ```
 
+```
+## Warning in file(file, "rt"): cannot open file './activity.csv': No such
+## file or directory
+```
+
+```
+## Error in file(file, "rt"): cannot open the connection
+```
+
 
 After the data was loaded we needed to fix some independent variable. 
 A timestamp variable was generated, as well as a date time stamp. These will
